@@ -3,13 +3,12 @@ import streamlit as st
 from openai import OpenAI
 from dotenv import dotenv_values
 from pathlib import Path
-from convert_to_time import convert_to_time
-from datetime import timedelta
+from utils.convert_to_time import convert_to_time
 
 ENV = dotenv_values(".env")
-DB_PATH = Path("dane")
-DB_IN = DB_PATH / "wejsciowe" 
-DB_OUT = DB_PATH / "wyjsciowe"
+DB_PATH = Path("data")
+DB_IN = DB_PATH / "input" / "overtime"
+DB_OUT = DB_PATH / "output"
 COLUMN_NAMES_150 = ["ID", "Suma"]
 
 # nazwy plików z nadgodzinami
