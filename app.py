@@ -25,25 +25,52 @@ for column in df.columns:
         df[column] = df[column].fillna(timedelta(0))
 
 # OBLICZENIA
-# Definicja limitu rocznych nadgodzin
-annual_overtime_limit = timedelta(hours=416)
+# Norma czasu pracy
+ANNUAL_WORKING_TIME_STANDARD_IN_HOURS = pd.Timedelta(hours=2000)
 
-# Obliczanie czasu prowadzenia
-columns_to_sum_time_driving = ["JRJ", "PTU", "TP", "WZZ", "ZDZ", "ZT"]
-# columns_to_sum_time_driving = ["JRJ", "PTU", "WZZ", "ZDZ", "ZT"]
-# Filtracja kolumn, które faktycznie istnieją w DataFrame
-existing_time_driving_columns = [col for col in columns_to_sum_time_driving if col in df.columns]
+# Tablica z sumami kolumn
+columns_list = ['100', '50', 'norma', 'przepracowane', 'JRJ', 'PMP', 'PTU', 'PZ', 'REZ', 'UW', 'WZZ', 'ZDZ', 'ZT']
+columns_sums = {col: df[col].sum() for col in columns_list if col in df.columns}
 
-if existing_time_driving_columns:
-    # Obliczenie sumy dla istniejących kolumn
-    lead_time = df[existing_time_driving_columns].sum().sum()
-else:
-    # Jeżeli żadna z kolumn nie istnieje, ustaw czas_prowadzenia na timedelta(0)
-    lead_time = timedelta(0)
+# Obliczenie czasu prowadzenia
+# driving_time = sum(columns_sums.get(key, pd.Timedelta(0)) for key in columns_sums)
+columns_to_sum_driving_time = ["JRJ", "PTU", "TP", "WZZ", "ZDZ", "ZT"]
+# Suma wartości ze słownika columns_sums dla kolumn z columns_to_sum_driving_time
+driving_time = sum(
+    (columns_sums[col] for col in columns_to_sum_driving_time if col in columns_sums),
+    start=pd.Timedelta(0)
+)
 
-print(f"Czas prowadzenia = {lead_time}")
+# Obliczenie innych czynności
+# Lista kolumn do zsumowania dla czasu zadań
+columns_to_sum_other_tasks = ["PZ", "REZ", "UW"]
 
+# Suma wartości ze słownika columns_sums dla kolumn z columns_to_sum_other_tasks
+other_tasks = sum(
+    (columns_sums[col] for col in columns_to_sum_other_tasks if col in columns_sums),
+    start=pd.Timedelta(0)
+)
 
+# Obliczanie przerw ustawowych
+# Lista kolumn do zsumowania dla przerw ustawowych
+columns_to_sum_statutory_breaks = ["PMP", "PRZ"]
+
+# Suma wartości ze słownika columns_sums dla kolumn z columns_to_sum_statutory_breaks
+statutory_breaks = sum(
+    (columns_sums[col] for col in columns_to_sum_statutory_breaks if col in columns_sums),
+    start=pd.Timedelta(0)
+)
+
+# Obliczanie brakujących etatów
+# Obliczenie brakujących godzin
+# Kolumny do uwzględnienia w obliczeniu różnicy
+columns_to_sum_driving_time = ["JRJ", "PMP", "PRZ", "PTU", "PZ", "REZ", "TP", "UW", "WZZ", "ZDZ", "ZT"]
+
+# Suma kolumny 'przepracowane' oraz 'norma'
+worked_time = columns_sums.get('przepracowane', pd.Timedelta(0))  # Ustalamy początkową wartość na Timedelta(0)
+norma_time = columns_sums.get('norma', pd.Timedelta(0))  # Ustalamy początkową wartość na Timedelta(0)
+
+#====================================================
 # Ścieżka do pliku wynikowego
 # output_path = "result.xlsx"
 
