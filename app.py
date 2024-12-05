@@ -24,6 +24,10 @@ for column in df.columns:
     if column != "ID":  # Nie dotyczy kolumny kluczowej
         df[column] = df[column].fillna(timedelta(0))
 
+# # Usunięcie wierszy zawierających same zera
+# zero_rows_mask = (df == pd.Timedelta(0)).all(axis=1)
+# df = df[~zero_rows_mask]
+
 # OBLICZENIA
 # Norma czasu pracy
 ANNUAL_WORKING_TIME_STANDARD_IN_HOURS = pd.Timedelta(hours=2000)
@@ -81,21 +85,38 @@ missing_employment = round((missing_positions_in_hours / ANNUAL_WORKING_TIME_STA
 print(f"Brakujące etaty w godzinach = {missing_positions_in_hours}")
 print(f"Brakujące etaty = {missing_employment}")
 
+# Wykorzystanie nadgodzin w procentach
+df_num_rows = df.shape[0]
+INCREASED_ANNUAL_OVERTIME_LIMIT_FOR_FULLTIME_EMPLOYMENT = pd.Timedelta(hours=416) * df_num_rows
 
+# Klucze do zsumowania
+columns_to_sum_overtime = ["100", "50"]
 
+# Obliczenie sumy kolumn
+overtime_sum = columns_sums.get('50') + columns_sums.get('100')
+
+print(f"df_num_rows = {df_num_rows}")
+
+print(f"INCREASED_ANNUAL_OVERTIME_LIMIT_FOR_FULLTIME_EMPLOYMENT = {INCREASED_ANNUAL_OVERTIME_LIMIT_FOR_FULLTIME_EMPLOYMENT}")
+# overtime_sum = columns_sums.get('50', pd.Timedelta(0)) + columns_sums.get('100', pd.Timedelta(0))
+
+overtime_percentage = round((overtime_sum / INCREASED_ANNUAL_OVERTIME_LIMIT_FOR_FULLTIME_EMPLOYMENT) * 100, 2)
+
+print(f"overtime_sum = {overtime_sum}")
+print(f"overtime_sum / INCREASED_ANNUAL_OVERTIME_LIMIT_FOR_FULLTIME_EMPLOYMENT = {overtime_percentage} %")
 
 
 #====================================================
-# Ścieżka do pliku wynikowego
+# # Ścieżka do pliku wynikowego
 # output_path = "result.xlsx"
 
-# Konwersja kolumn timedelta na format dni dziesiętnych (kompatybilny z Excela)
+# # Konwersja kolumn timedelta na format dni dziesiętnych (kompatybilny z Excela)
 # for column in df.columns:
 #     if column != "ID":  # Pomijamy kolumnę kluczową
 #         df[column] = df[column].dt.total_seconds() / (24 * 3600)  # Konwersja timedelta na dni dziesiętne
 
 
-# Eksport do Excela z formatowaniem
+# # Eksport do Excela z formatowaniem
 # df.to_excel(output_path, index=False)
 # print(f"Plik został zapisany jako {output_path}.")
 
