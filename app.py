@@ -65,10 +65,25 @@ statutory_breaks = sum(
 # Obliczenie brakujących godzin
 # Kolumny do uwzględnienia w obliczeniu różnicy
 columns_to_sum_driving_time = ["JRJ", "PMP", "PRZ", "PTU", "PZ", "REZ", "TP", "UW", "WZZ", "ZDZ", "ZT"]
+sum_driving_time = sum(
+    (columns_sums.get(col, pd.Timedelta(0)) for col in columns_to_sum_driving_time),
+    pd.Timedelta(0)  # Wartość startowa
+)
 
 # Suma kolumny 'przepracowane' oraz 'norma'
 worked_time = columns_sums.get('przepracowane', pd.Timedelta(0))  # Ustalamy początkową wartość na Timedelta(0)
 norma_time = columns_sums.get('norma', pd.Timedelta(0))  # Ustalamy początkową wartość na Timedelta(0)
+
+missing_positions_in_hours = (worked_time - norma_time)+(sum_driving_time-worked_time)
+
+missing_employment = round((missing_positions_in_hours / ANNUAL_WORKING_TIME_STANDARD_IN_HOURS), 2)
+
+print(f"Brakujące etaty w godzinach = {missing_positions_in_hours}")
+print(f"Brakujące etaty = {missing_employment}")
+
+
+
+
 
 #====================================================
 # Ścieżka do pliku wynikowego
