@@ -4,13 +4,15 @@ from dotenv import dotenv_values
 from datetime import timedelta
 from utils.process_overtime_files import process_overtime_files
 from utils.process_task_files import process_task_files
+from utils.export_result_to_excel import *
 
 # Wczytanie konfiguracji
 ENV = dotenv_values(".env")
-DB_PATH = Path("data")
-DB_IN_OVERTIME = DB_PATH / "input" / "overtime"
-DB_IN_TASKS = DB_PATH / "input" / "tasks"
-DB_OUT = DB_PATH / "output"
+DB_INPUT_PATH = Path(ENV["DB_INPUT_PATH"])
+DB_IN_OVERTIME = DB_INPUT_PATH / "overtime"
+DB_IN_TASKS = DB_INPUT_PATH / "tasks"
+
+# print(f"DB_IN_OVERTIME = {DB_IN_OVERTIME} ")
 
 # Przetwarzanie plików nadgodzin
 df_overtime = process_overtime_files(DB_IN_OVERTIME)
@@ -105,23 +107,6 @@ overtime_percentage = round((overtime_sum / INCREASED_ANNUAL_OVERTIME_LIMIT_FOR_
 print(f"overtime_sum = {overtime_sum}")
 print(f"overtime_sum / INCREASED_ANNUAL_OVERTIME_LIMIT_FOR_FULLTIME_EMPLOYMENT = {overtime_percentage} %")
 
+# export_dataframe_to_excel(df)
+# export_dataframe_to_csv(df)
 
-#====================================================
-# # Ścieżka do pliku wynikowego
-# output_path = "result.xlsx"
-
-# # Konwersja kolumn timedelta na format dni dziesiętnych (kompatybilny z Excela)
-# for column in df.columns:
-#     if column != "ID":  # Pomijamy kolumnę kluczową
-#         df[column] = df[column].dt.total_seconds() / (24 * 3600)  # Konwersja timedelta na dni dziesiętne
-
-
-# # Eksport do Excela z formatowaniem
-# df.to_excel(output_path, index=False)
-# print(f"Plik został zapisany jako {output_path}.")
-
-
-# Zapisanie wyników do pliku
-# output_file = DB_OUT / "combined_overtime.csv"
-# df_overtime.to_csv(output_file, index=False, sep=";")
-# print(f"Wynik zapisany do pliku: {output_file}")
