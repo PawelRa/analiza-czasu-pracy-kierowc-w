@@ -76,6 +76,8 @@ sum_driving_time = sum(
     pd.Timedelta(0)  # Wartość startowa
 )
 
+print(f"SUMY KOLUMN = {columns_sums}")
+
 # Suma kolumny 'przepracowane' oraz 'norma'
 worked_time = columns_sums.get('przepracowane', pd.Timedelta(0))  # Ustalamy początkową wartość na Timedelta(0)
 norma_time = columns_sums.get('norma', pd.Timedelta(0))  # Ustalamy początkową wartość na Timedelta(0)
@@ -107,6 +109,6 @@ overtime_percentage = round((overtime_sum / INCREASED_ANNUAL_OVERTIME_LIMIT_FOR_
 print(f"overtime_sum = {overtime_sum}")
 print(f"overtime_sum / INCREASED_ANNUAL_OVERTIME_LIMIT_FOR_FULLTIME_EMPLOYMENT = {overtime_percentage} %")
 
-# export_dataframe_to_excel(df)
-# export_dataframe_to_csv(df)
+export_dataframe_to_excel(df)
+export_dataframe_to_csv(df)
 
