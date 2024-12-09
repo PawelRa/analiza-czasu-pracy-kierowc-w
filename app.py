@@ -27,8 +27,8 @@ for column in df.columns:
         df[column] = df[column].fillna(timedelta(0))
 
 # # Usunięcie wierszy zawierających same zera
-# zero_rows_mask = (df == pd.Timedelta(0)).all(axis=1)
-# df = df[~zero_rows_mask]
+zero_rows_mask = (df.iloc[:, 1:] == pd.Timedelta(0)).all(axis=1)
+df = df[~zero_rows_mask]
 
 # OBLICZENIA
 # Norma czasu pracy
