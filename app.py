@@ -5,6 +5,7 @@ from datetime import timedelta
 from utils.process_overtime_files import process_overtime_files
 from utils.process_task_files import process_task_files
 from utils.export_result_to_excel import *
+from analysis import analyze_data
 
 # Wczytanie konfiguracji
 ENV = dotenv_values(".env")
@@ -109,6 +110,13 @@ overtime_percentage = round((overtime_sum / INCREASED_ANNUAL_OVERTIME_LIMIT_FOR_
 print(f"overtime_sum = {overtime_sum}")
 print(f"overtime_sum / INCREASED_ANNUAL_OVERTIME_LIMIT_FOR_FULLTIME_EMPLOYMENT = {overtime_percentage} %")
 
-export_dataframe_to_excel(df)
-export_dataframe_to_csv(df)
+
+analyze_data(df)
+
+
+
+
+
+# export_dataframe_to_excel(df)
+# export_dataframe_to_csv(df)
 
