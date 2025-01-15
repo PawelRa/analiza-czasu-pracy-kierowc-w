@@ -6,6 +6,9 @@ from utils.process_overtime_files import process_overtime_files
 from utils.process_task_files import process_task_files
 from utils.export_result_to_excel import *
 from analysis import analyze_data
+import matplotlib
+matplotlib.use('TkAgg')
+
 
 # Wczytanie konfiguracji
 ENV = dotenv_values(".env")
