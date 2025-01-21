@@ -1,5 +1,7 @@
 import streamlit as st
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 from pathlib import Path
 from dotenv import dotenv_values
 from datetime import timedelta
@@ -84,6 +86,100 @@ def manage_files(directory, required_files, title):
             else:
                 st.warning(f"Plik {uploaded_file.name} nie jest wymagany w tej sekcji.")
 
+def plot_overtime_usage(df):
+    # Upewnienie się, że kolumny zawierają wartości w formacie Timedelta
+    df['50'] = pd.to_timedelta(df['50'], errors='coerce')
+    df['100'] = pd.to_timedelta(df['100'], errors='coerce')
+
+    # Obliczenie sumy nadgodzin
+    overtime_sum = df['50'].sum() + df['100'].sum()
+
+    # Ustalenie liczby pracowników
+    df_num_rows = df.shape[0]
+    annual_overtime_limit = pd.Timedelta(hours=416) * df_num_rows  # Rok nadgodzin dla wszystkich pracowników
+
+    # Procentowy udział nadgodzin
+    overtime_percentage = (overtime_sum / annual_overtime_limit) * 100
+
+    # Przygotowanie danych do wykresu kołowego
+    labels = ['Wykorzystane nadgodziny', 'Pozostały czas']
+    sizes = [overtime_percentage, 100 - overtime_percentage]
+    colors = ['#ff9999','#66b3ff']
+
+    # Wykres kołowy
+    fig, ax = plt.subplots()
+    ax.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=90)
+    ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+
+    st.pyplot(fig)
+
+def plot_comparison_overtime_norm(df):
+    # Upewnienie się, że kolumny zawierają wartości w formacie Timedelta
+    df['50'] = pd.to_timedelta(df['50'], errors='coerce')
+    df['100'] = pd.to_timedelta(df['100'], errors='coerce')
+    df['norma'] = pd.to_timedelta(df['norma'], errors='coerce')
+    
+    # Usuwamy wiersze z NaT (puste wartości) w kluczowych kolumnach
+    df_clean = df.dropna(subset=['50', '100', 'norma'])
+    
+    # Obliczenie sumy nadgodzin (50% i 100%)
+    overtime_50_sum = df_clean['50'].sum()
+    overtime_100_sum = df_clean['100'].sum()
+    
+    # Obliczenie sumy normy
+    norma_sum = df_clean['norma'].sum()
+    
+    # Przygotowanie danych do wykresu
+    overtime_values = [overtime_50_sum.total_seconds(), overtime_100_sum.total_seconds()]
+    norma_values = [norma_sum.total_seconds()] * 2  # Powielamy normę dla obu typów nadgodzin (50% i 100%)
+
+    # Wykres porównania nadgodzin i normy
+    labels = ['50% Overtime', '100% Overtime']
+    
+    fig, ax = plt.subplots(figsize=(8, 6))
+    bar_width = 0.35
+    index = range(2)
+    
+    ax.bar(index, overtime_values, bar_width, label='Nadgodziny')
+    ax.bar([i + bar_width for i in index], norma_values, bar_width, label='Norma')
+
+    ax.set_xlabel('Rodzaj nadgodzin')
+    ax.set_ylabel('Czas (w sekundach)')
+    ax.set_title('Porównanie nadgodzin (50% i 100%) do normy')
+    ax.set_xticks([i + bar_width / 2 for i in index])
+    ax.set_xticklabels(labels)
+    ax.legend()
+
+    st.pyplot(fig)
+
+
+def plot_worked_vs_overtime(df):
+    # Upewnienie się, że kolumny zawierają wartości w formacie Timedelta
+    df['przepracowane'] = pd.to_timedelta(df['przepracowane'], errors='coerce')
+    df['50'] = pd.to_timedelta(df['50'], errors='coerce')
+    df['100'] = pd.to_timedelta(df['100'], errors='coerce')
+    
+    # Usunięcie wierszy z brakującymi wartościami w kluczowych kolumnach
+    df_clean = df.dropna(subset=['przepracowane', '50', '100'])
+
+    # Obliczenie całkowitego przepracowanego czasu i nadgodzin
+    worked_time = df_clean['przepracowane'].sum().total_seconds() / 3600  # Konwersja na godziny
+    overtime_time = (df_clean['50'].sum() + df_clean['100'].sum()).total_seconds() / 3600  # Konwersja na godziny
+
+    # Przygotowanie danych do wykresu
+    labels = ['Przepracowane', 'Nadgodziny']
+    values = [worked_time, overtime_time]
+
+    # Tworzenie wykresu
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.bar(labels, values, color=['#1f77b4', '#ff7f0e'])
+    ax.set_ylabel('Czas (w godzinach)')
+    ax.set_title('Porównanie przepracowanego czasu do nadgodzin')
+
+    # Wyświetlenie wykresu w aplikacji Streamlit
+    st.pyplot(fig)
+
+
 def data_analysis_section():
     st.header("Analiza danych")
     try:
@@ -135,9 +231,11 @@ def data_analysis_section():
 
         st.write(f"Wykorzystanie nadgodzin: {overtime_percentage}%")
 
-        # Analiza danych i wizualizacja
-        st.subheader("Analiza danych")
-        analyze_data(df)
+        # Wizualizacje
+        st.subheader("Wizualizacje")
+     #   plot_overtime_usage(df) # wstępnie ok
+      #  plot_comparison_overtime_norm(df) # wstępnie ok
+        plot_worked_vs_overtime(df)
 
         # Eksport danych
         st.subheader("Eksport wyników")
