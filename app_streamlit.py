@@ -1,7 +1,12 @@
 import streamlit as st
+import pandas as pd
 from pathlib import Path
 from dotenv import dotenv_values
 from utils.file_operations import delete_overtime_files, delete_task_files
+from utils.process_overtime_files import process_overtime_files
+from utils.process_task_files import process_task_files
+from utils.analysis import analyze_data
+from datetime import timedelta
 
 # Wczytanie konfiguracji z pliku .env
 ENV = dotenv_values(".env")
@@ -21,27 +26,19 @@ OVERTIME_FILES = ["50.csv", "100.csv", "norma.csv", "przepracowane.csv"]
 TASK_FILES = ["JRJ.csv", "PMP.csv", "PTU.csv", "PZ.csv", "REZ.csv", "UW.csv", "WZZ.csv", "ZDZ.csv", "ZT.csv"]
 
 def main():
-    st.title("Zarządzanie plikami aplikacji")
+    st.title("Aplikacja do zarządzania i analizy danych")
     st.sidebar.header("Opcje")
 
-    # Wybór sekcji: overtime/task
+    section = st.sidebar.radio("Wybierz sekcję:", ["Zarządzanie plikami", "Analiza danych"])
+
+    if section == "Zarządzanie plikami":
+        file_management_section()
+    elif section == "Analiza danych":
+        data_analysis_section()
+
+def file_management_section():
+    st.header("Zarządzanie plikami")
     section = st.sidebar.radio("Wybierz sekcję:", ["overtime", "task"])
-
-    # Ustawienie sesji dla komunikatów
-    if "message_clear" not in st.session_state:
-        st.session_state.message_clear = False
-
-    if "last_section" not in st.session_state:
-        st.session_state.last_section = section
-
-    if "uploaded_files" not in st.session_state:
-        st.session_state.uploaded_files = []
-
-    # Zmiana sekcji, czyszczenie komunikatów
-    if section != st.session_state.last_section:
-        st.session_state.message_clear = True  # Ustawienie flagi, aby komunikaty były usunięte
-        st.session_state.last_section = section
-        st.session_state.uploaded_files = []  # Resetowanie listy wgranych plików
 
     if section == "overtime":
         manage_files(OVERTIME_PATH, OVERTIME_FILES, "Pliki czasu pracy (overtime)")
@@ -57,8 +54,6 @@ def main():
 def manage_files(directory, required_files, title):
     """Zarządzanie plikami w wybranym katalogu."""
     st.header(title)
-
-    # Wyświetlenie listy istniejących plików
     st.subheader("Istniejące pliki:")
     existing_files = list(directory.glob("*.csv"))
     existing_files_names = [f.name for f in existing_files]
@@ -68,7 +63,6 @@ def manage_files(directory, required_files, title):
     else:
         st.write("Brak plików w katalogu.")
 
-    # Wyświetlenie brakujących plików
     missing_files = [file for file in required_files if file not in existing_files_names]
     if missing_files:
         st.subheader("Brakujące pliki:")
@@ -76,12 +70,9 @@ def manage_files(directory, required_files, title):
     else:
         st.success("Wszystkie wymagane pliki są obecne.")
 
-    # Wgrywanie nowych plików
     st.subheader("Dodaj pliki:")
     uploaded_files = st.file_uploader("Wgraj pliki CSV", type=["csv"], accept_multiple_files=True)
-
     if uploaded_files:
-        st.session_state.uploaded_files = uploaded_files  # Zapisujemy wgrane pliki w sesji
         for uploaded_file in uploaded_files:
             if uploaded_file.name in required_files:
                 save_path = directory / uploaded_file.name
@@ -91,10 +82,34 @@ def manage_files(directory, required_files, title):
             else:
                 st.warning(f"Plik {uploaded_file.name} nie jest wymagany w tej sekcji.")
 
-    # Czyszczenie komunikatów po zmianie sekcji
-    if st.session_state.message_clear:
-        st.session_state.message_clear = False
-        st.empty()  # Usunięcie wszystkich wyświetlonych komunikatów
+def data_analysis_section():
+    st.header("Analiza danych")
+    try:
+        # Przetwarzanie danych
+        df_overtime = process_overtime_files(OVERTIME_PATH)
+        df_tasks = process_task_files(TASK_PATH)
+        df = pd.merge(df_overtime, df_tasks, on="ID", how="outer")
+
+        for column in df.columns:
+            if column != "ID":
+                df[column] = df[column].fillna(timedelta(0))
+
+        zero_rows_mask = (df.iloc[:, 1:] == pd.Timedelta(0)).all(axis=1)
+        df = df[~zero_rows_mask]
+
+        st.subheader("Podgląd danych:")
+        st.dataframe(df)
+
+        # Obliczenia
+        st.subheader("Wyniki analizy:")
+        columns_sums = {col: df[col].sum() for col in df.columns if col != "ID"}
+        st.write("Suma kolumn:", columns_sums)
+
+        analyze_data(df)
+        st.success("Analiza danych zakończona pomyślnie.")
+
+    except Exception as e:
+        st.error(f"Wystąpił błąd: {e}")
 
 if __name__ == "__main__":
     main()
