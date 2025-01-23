@@ -86,6 +86,79 @@ def manage_files(directory, required_files, title):
             else:
                 st.warning(f"Plik {uploaded_file.name} nie jest wymagany w tej sekcji.")
 
+def plot_task_completion_time_histogram(df):
+    # Lista kolumn odpowiadających zadaniom
+    task_columns = ["JRJ", "PMP", "PTU", "PZ", "REZ", "UW", "WZZ", "ZDZ", "ZT"]
+    
+    # Obliczenie sumy dla każdej kolumny zadań
+    task_sums = {col: df[col].sum() for col in task_columns if col in df.columns}
+    
+    # Konwersja wartości Timedelta na godziny
+    task_hours = {task: task_sums[task].total_seconds() / 3600 for task in task_sums}
+    
+    # Tworzenie histogramu
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sns.barplot(
+        x=list(task_hours.keys()), 
+        y=list(task_hours.values()), 
+        palette="Blues_d", 
+        ax=ax
+    )
+    
+    ax.set_title("Czas realizacji zadań", fontsize=16)
+    ax.set_xlabel("Rodzaj zadania", fontsize=12)
+    ax.set_ylabel("Czas (w godzinach)", fontsize=12)
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha="right")
+    
+    # Wyświetlenie wykresu w Streamlit
+    st.pyplot(fig)
+
+def plot_overtime_distribution(df):
+    # Upewnienie się, że kolumny zawierają wartości w formacie Timedelta
+    df['50'] = pd.to_timedelta(df['50'], errors='coerce')
+    df['100'] = pd.to_timedelta(df['100'], errors='coerce')
+
+    # Obliczenie całkowitych nadgodzin (suma kolumn 50 i 100)
+    df['total_overtime'] = df['50'] + df['100']
+    
+    # Usunięcie wierszy z NaT w kolumnie total_overtime
+    df_clean = df.dropna(subset=['total_overtime'])
+    
+    # Konwersja na godziny dla histogramu
+    overtime_hours = df_clean['total_overtime'].dt.total_seconds() / 3600  # Konwersja na godziny
+    
+    # Tworzenie histogramu
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sns.histplot(overtime_hours, bins=10, kde=False, color='skyblue', ax=ax)
+    
+    ax.set_title("Rozkład nadgodzin z podziałem na przedziały", fontsize=16)
+    ax.set_xlabel("Nadgodziny (w godzinach)", fontsize=12)
+    ax.set_ylabel("Liczba pracowników", fontsize=12)
+    
+    # Wyświetlenie wykresu w Streamlit
+    st.pyplot(fig)
+
+def plot_worked_hours_histogram(df):
+    # Upewnienie się, że kolumna przepracowane zawiera wartości w formacie Timedelta
+    df['przepracowane'] = pd.to_timedelta(df['przepracowane'], errors='coerce')
+    
+    # Usunięcie wierszy z NaT w kolumnie przepracowane
+    df_clean = df.dropna(subset=['przepracowane'])
+
+    # Konwersja na godziny, ponieważ timedelta nie jest kompatybilny z histogramami
+    worked_hours = df_clean['przepracowane'].dt.total_seconds() / 3600  # Konwersja na godziny
+
+    # Tworzenie histogramu
+    fig, ax = plt.subplots(figsize=(8, 6))
+    sns.histplot(worked_hours, bins=20, kde=True, color='skyblue', ax=ax)
+    ax.set_title("Histogram przepracowanych godzin")
+    ax.set_xlabel("Przepracowane godziny")
+    ax.set_ylabel("Liczba pracowników")
+
+    # Wyświetlenie wykresu w Streamlit
+    st.pyplot(fig)
+
+
 def plot_overtime_usage(df):
     # Upewnienie się, że kolumny zawierają wartości w formacie Timedelta
     df['50'] = pd.to_timedelta(df['50'], errors='coerce')
@@ -204,7 +277,7 @@ def data_analysis_section():
         st.write(df)
 
         # Obliczenia
-        st.subheader("Obliczenia")
+        st.markdown("# Obliczenia", unsafe_allow_html=True)
         columns_list = ['100', '50', 'norma', 'przepracowane', 'JRJ', 'PMP', 'PTU', 'PZ', 'REZ', 'UW', 'WZZ', 'ZDZ', 'ZT']
         columns_sums = {col: df[col].sum() for col in columns_list if col in df.columns}
 
@@ -232,10 +305,25 @@ def data_analysis_section():
         st.write(f"Wykorzystanie nadgodzin: {overtime_percentage}%")
 
         # Wizualizacje
-        st.subheader("Wizualizacje")
-     #   plot_overtime_usage(df) # wstępnie ok
-      #  plot_comparison_overtime_norm(df) # wstępnie ok
-        plot_worked_vs_overtime(df)
+        st.markdown("# Wizualizacje")
+        st.subheader("Histogram przepracowanych godzin")
+        plot_worked_hours_histogram(df)
+        st.markdown("""
+        Linia widoczna na histogramie to **estymacja funkcji gęstości jądra (KDE)**. 
+        Przedstawia ona oszacowanie rozkładu przepracowanych godzin w postaci gładkiej krzywej. 
+        Pomaga lepiej zrozumieć, jak wartości są rozłożone w całym zakresie danych.
+        """)
+
+        st.subheader("Histogram czasu realizacji zadań")
+        plot_task_completion_time_histogram(df)
+
+        st.subheader("Rozkład nadgodzin")
+        plot_overtime_distribution(df)
+
+
+        # plot_overtime_usage(df) # wstępnie ok
+        # plot_comparison_overtime_norm(df) # wstępnie ok
+        # plot_worked_vs_overtime(df)
 
         # Eksport danych
         st.subheader("Eksport wyników")
