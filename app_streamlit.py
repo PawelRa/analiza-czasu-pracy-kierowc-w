@@ -86,6 +86,46 @@ def manage_files(directory, required_files, title):
             else:
                 st.warning(f"Plik {uploaded_file.name} nie jest wymagany w tej sekcji.")
 
+def compare_overtime_by_employee(df):
+    # Przekształcenie wartości nadgodzin na Timedelta
+    df['50'] = pd.to_timedelta(df['50'], errors='coerce')
+    df['100'] = pd.to_timedelta(df['100'], errors='coerce')
+
+    # Konwersja na godziny
+    df['50_hours'] = df['50'].dt.total_seconds() / 3600
+    df['100_hours'] = df['100'].dt.total_seconds() / 3600
+
+    # Wykres słupkowy z podziałem na pracowników
+    fig, ax = plt.subplots(figsize=(12, 6))
+    df[['50_hours', '100_hours']].plot(kind='bar', stacked=True, ax=ax, color=['#66b3ff', '#ff9999'])
+    ax.set_title("Porównanie nadgodzin płatnych 50% i 100% w podziale na pracowników")
+    ax.set_xlabel("Pracownik")
+    ax.set_ylabel("Nadgodziny (w godzinach)")
+    ax.legend(['50% Overtime', '100% Overtime'], loc='upper right')
+
+    # Wyświetlenie w Streamlit
+    st.pyplot(fig)
+
+def analyze_overtime_vs_norm(df):
+    # Przekształcenie wartości na Timedelta
+    df['norma'] = pd.to_timedelta(df['norma'], errors='coerce')
+    df['total_overtime'] = pd.to_timedelta(df['50'], errors='coerce') + pd.to_timedelta(df['100'], errors='coerce')
+
+    # Obliczenie różnicy między normą a nadgodzinami
+    df['difference'] = df['total_overtime'] - df['norma']
+
+    # Wykres porównania
+    fig, ax = plt.subplots(figsize=(12, 6))
+    df[['norma', 'total_overtime']].apply(lambda x: x.dt.total_seconds() / 3600).plot(kind='bar', ax=ax, color=['#66b3ff', '#ff9999'])
+    ax.axhline(0, color='black', linewidth=0.8, linestyle='--')
+    ax.set_title("Wpływ normy czasu pracy na liczbę nadgodzin")
+    ax.set_xlabel("Pracownik")
+    ax.set_ylabel("Czas (w godzinach)")
+    ax.legend(['Norma', 'Całkowite nadgodziny'], loc='upper right')
+
+    # Wyświetlenie w Streamlit
+    st.pyplot(fig)
+
 def plot_task_completion_time_histogram(df):
     # Lista kolumn odpowiadających zadaniom
     task_columns = ["JRJ", "PMP", "PTU", "PZ", "REZ", "UW", "WZZ", "ZDZ", "ZT"]
@@ -320,6 +360,11 @@ def data_analysis_section():
         st.subheader("Rozkład nadgodzin")
         plot_overtime_distribution(df)
 
+        st.subheader("Porównanie nadgodzin płatnych 50% i 100% w podziale na pracowników")
+        compare_overtime_by_employee(df)
+
+        st.subheader("Wpływ normy czasu pracy na liczbę nadgodzin")
+        analyze_overtime_vs_norm(df)
 
         # plot_overtime_usage(df) # wstępnie ok
         # plot_comparison_overtime_norm(df) # wstępnie ok
