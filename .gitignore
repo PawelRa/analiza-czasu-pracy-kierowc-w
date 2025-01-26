@@ -1,0 +1,8 @@
+.env
+*.png
+*.excalidrawlib
+__pycache__
+*.pkl
+*.xlsx
+output
+*.csv
