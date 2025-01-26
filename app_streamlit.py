@@ -81,6 +81,24 @@ def manage_files(directory, required_files, title):
             else:
                 st.warning(f"Plik {uploaded_file.name} nie jest wymagany w tej sekcji.")
 
+def plot_overtime_usage_histogram(df, column_name='wykorzystanie_limitu_rocznego_w_%', bins=10):
+    """
+    Funkcja generuje histogram z wykorzystania nadgodzin w %.
+    """
+    plt.figure(figsize=(10, 6))
+    plt.hist(df[column_name].dropna(), bins=bins, edgecolor='black', color='skyblue')
+    
+    plt.title(f'Histogram - Wykorzystanie nadgodzin w %')
+    plt.xlabel(f'{column_name} (%)')
+    plt.ylabel('Liczba pracowników')
+    
+    # Opcjonalnie: Dodanie siatki i dostosowanie wyglądu
+    plt.grid(True, linestyle='--', alpha=0.7)
+    plt.tight_layout()
+    
+    # Renderowanie wykresu w Streamlit
+    st.pyplot(plt)
+
 def compare_overtime_by_employee(df):
     # Przekształcenie wartości nadgodzin na Timedelta
     df['50'] = pd.to_timedelta(df['50'], errors='coerce')
@@ -134,16 +152,22 @@ def plot_task_completion_time_histogram(df):
     # Tworzenie histogramu
     fig, ax = plt.subplots(figsize=(10, 6))
     sns.barplot(
-        x=list(task_hours.keys()), 
-        y=list(task_hours.values()), 
-        palette="Blues_d", 
-        ax=ax
+    x=list(task_hours.keys()), 
+    y=list(task_hours.values()), 
+    hue=list(task_hours.keys()),  # dodajemy hue
+    palette="Blues_d", 
+    ax=ax,
+    legend=False  # wyłączamy legendę
     )
+
     
     ax.set_title("Czas realizacji zadań", fontsize=16)
     ax.set_xlabel("Rodzaj zadania", fontsize=12)
     ax.set_ylabel("Czas (w godzinach)", fontsize=12)
-    ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha="right")
+
+    # Ustawienie etykiet osi X w sposób bezpieczny
+    ax.set_xticks(range(len(task_hours)))  # Ustawiamy ticki dla wszystkich zadań
+    ax.set_xticklabels(list(task_hours.keys()), rotation=45, ha="right")
     
     # Wyświetlenie wykresu w Streamlit
     st.pyplot(fig)
@@ -192,7 +216,6 @@ def plot_worked_hours_histogram(df):
 
     # Wyświetlenie wykresu w Streamlit
     st.pyplot(fig)
-
 
 def plot_overtime_usage(df):
     # Upewnienie się, że kolumny zawierają wartości w formacie Timedelta
@@ -259,7 +282,6 @@ def plot_comparison_overtime_norm(df):
     ax.legend()
 
     st.pyplot(fig)
-
 
 def plot_worked_vs_overtime(df):
     # Upewnienie się, że kolumny zawierają wartości w formacie Timedelta
@@ -354,6 +376,9 @@ def data_analysis_section():
         Przedstawia ona oszacowanie rozkładu przepracowanych godzin w postaci gładkiej krzywej. 
         Pomaga lepiej zrozumieć, jak wartości są rozłożone w całym zakresie danych.
         """)
+
+        st.subheader("% wykorzystania rocznego limitu nadgodzin")
+        plot_overtime_usage_histogram(df)
 
         st.subheader("Histogram czasu realizacji zadań")
         plot_task_completion_time_histogram(df)
