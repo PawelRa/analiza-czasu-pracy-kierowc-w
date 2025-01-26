@@ -1,4 +1,6 @@
 from pathlib import Path
+import pandas as pd
+from datetime import timedelta
 
 # Konfiguracja ścieżek
 DB_INPUT_PATH = Path("data/input")
@@ -15,4 +17,7 @@ OVERTIME_FILES = ["50.csv", "100.csv", "norma.csv", "przepracowane.csv"]
 TASK_FILES = ["JRJ.csv", "PMP.csv", "PTU.csv", "PZ.csv", "REZ.csv", "UW.csv", "WZZ.csv", "ZDZ.csv", "ZT.csv"]
 
 # Konstanta rocznej normy czasu pracy
-ANNUAL_WORKING_TIME_STANDARD_IN_HOURS = 2000
+ANNUAL_WORKING_TIME_STANDARD_IN_HOURS = pd.Timedelta(hours=2000)
+
+# roczny limit nadgodzin
+ANNUAL_OVERTIME_LIMIT_FOR_FULLTIME_EMPLOYMENT = pd.Timedelta(hours=416)

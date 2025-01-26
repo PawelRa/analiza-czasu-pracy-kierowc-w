@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from config import DB_INPUT_PATH, DB_OUTPUT_PATH, CHARTS_PATH, PROCESSED_DATA_PATH
+from config import DB_INPUT_PATH, DB_OUTPUT_PATH, CHARTS_PATH, PROCESSED_DATA_PATH, ANNUAL_WORKING_TIME_STANDARD_IN_HOURS, ANNUAL_OVERTIME_LIMIT_FOR_FULLTIME_EMPLOYMENT
 from pathlib import Path
 from datetime import timedelta
 from utils.file_operations import delete_overtime_files, delete_task_files
@@ -24,7 +24,7 @@ OVERTIME_FILES = ["50.csv", "100.csv", "norma.csv", "przepracowane.csv"]
 TASK_FILES = ["JRJ.csv", "PMP.csv", "PTU.csv", "PZ.csv", "REZ.csv", "UW.csv", "WZZ.csv", "ZDZ.csv", "ZT.csv"]
 
 # Konstanta rocznej normy czasu pracy
-ANNUAL_WORKING_TIME_STANDARD_IN_HOURS = pd.Timedelta(hours=2000)
+ANNUAL_WORKING_TIME_STANDARD_IN_HOURS
 
 def main():
     st.title("Aplikacja do zarządzania i analizy danych")
@@ -204,7 +204,7 @@ def plot_overtime_usage(df):
 
     # Ustalenie liczby pracowników
     df_num_rows = df.shape[0]
-    annual_overtime_limit = pd.Timedelta(hours=416) * df_num_rows  # Rok nadgodzin dla wszystkich pracowników
+    annual_overtime_limit = ANNUAL_OVERTIME_LIMIT_FOR_FULLTIME_EMPLOYMENT * df_num_rows  # Rok nadgodzin dla wszystkich pracowników
 
     # Procentowy udział nadgodzin
     overtime_percentage = (overtime_sum / annual_overtime_limit) * 100
@@ -333,7 +333,7 @@ def data_analysis_section():
 
         # Wykorzystanie nadgodzin
         df_num_rows = df.shape[0]
-        INCREASED_ANNUAL_OVERTIME_LIMIT_FOR_FULLTIME_EMPLOYMENT = pd.Timedelta(hours=416) * df_num_rows
+        INCREASED_ANNUAL_OVERTIME_LIMIT_FOR_FULLTIME_EMPLOYMENT = ANNUAL_OVERTIME_LIMIT_FOR_FULLTIME_EMPLOYMENT * df_num_rows
         overtime_sum = columns_sums.get('50', pd.Timedelta(0)) + columns_sums.get('100', pd.Timedelta(0))
         overtime_percentage = round((overtime_sum / INCREASED_ANNUAL_OVERTIME_LIMIT_FOR_FULLTIME_EMPLOYMENT) * 100, 2)
 
