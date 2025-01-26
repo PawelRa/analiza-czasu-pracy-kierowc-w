@@ -307,6 +307,12 @@ def data_analysis_section():
         zero_rows_mask = (df.iloc[:, 1:] == pd.Timedelta(0)).all(axis=1)
         df = df[~zero_rows_mask]
 
+        # Dodanie kolumny wykorzystania rocznego limitu nadgodzin w % i zaokrąglenie do 2 miejsc po przecinku
+        df['wykorzystanie_limitu_rocznego_w_%'] = (
+        (pd.to_timedelta(df['50'], errors='coerce') + pd.to_timedelta(df['100'], errors='coerce')) / ANNUAL_OVERTIME_LIMIT_FOR_FULLTIME_EMPLOYMENT
+        ).round(2) * 100
+
+
         # Wyświetlenie tabeli
         st.subheader("Podgląd danych")
         st.write(df)
