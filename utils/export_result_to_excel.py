@@ -1,12 +1,13 @@
+import pandas as pd
 from pathlib import Path
 from openpyxl import Workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
-import pandas as pd
 from dotenv import dotenv_values
+from config import DB_INPUT_PATH, DB_OUTPUT_PATH, CHARTS_PATH, PROCESSED_DATA_PATH, ANNUAL_WORKING_TIME_STANDARD_IN_HOURS, ANNUAL_OVERTIME_LIMIT_FOR_FULLTIME_EMPLOYMENT
+
 
 # Wczytanie konfiguracji
-ENV = dotenv_values(".env")
-DB_OUT = ENV["DB_OUTPUT_PATH"]
+DB_OUT = DB_OUTPUT_PATH
 
 def timedelta_to_excel_numeric(td):
     """Konwertuje timedelta na liczbę odpowiadającą ułamkowi dnia w Excel."""
