@@ -2,19 +2,14 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from config import DB_INPUT_PATH, DB_OUTPUT_PATH, CHARTS_PATH, PROCESSED_DATA_PATH
 from pathlib import Path
-from dotenv import dotenv_values
 from datetime import timedelta
 from utils.file_operations import delete_overtime_files, delete_task_files
 from utils.process_overtime_files import process_overtime_files
 from utils.process_task_files import process_task_files
 from utils.export_result_to_excel import export_dataframe_to_excel, export_dataframe_to_csv
 from utils.analysis import analyze_data
-
-# Wczytanie konfiguracji z pliku .env
-ENV = dotenv_values(".env")
-DB_INPUT_PATH = Path(ENV["DB_INPUT_PATH"])
-DB_OUTPUT_PATH = Path(ENV["DB_OUTPUT_PATH"])
 
 # Ścieżki do podkatalogów
 OVERTIME_PATH = DB_INPUT_PATH / "overtime"
