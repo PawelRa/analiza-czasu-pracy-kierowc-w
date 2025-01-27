@@ -8,7 +8,7 @@ from datetime import timedelta
 from utils.file_operations import delete_overtime_files, delete_task_files
 from utils.process_overtime_files import process_overtime_files
 from utils.process_task_files import process_task_files
-from utils.export_result_to_excel import export_dataframe_to_excel, export_dataframe_to_csv
+from utils.streamlit_exports import export_dataframe_to_excel, export_dataframe_to_csv
 from utils.analysis import analyze_data
 
 # Ścieżki do podkatalogów
