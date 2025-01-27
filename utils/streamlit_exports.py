@@ -25,6 +25,7 @@ def export_dataframe_to_excel(df):
     """
     Eksportuje DataFrame do pliku Excel, który użytkownik może pobrać w aplikacji Streamlit.
     """
+
     # Tworzenie pliku Excel w pamięci
     output = io.BytesIO()
     wb = Workbook()
@@ -39,6 +40,12 @@ def export_dataframe_to_excel(df):
                     lambda x: timedelta_to_excel_numeric(x) if pd.notnull(x) else ""
                 )
 
+    # Konwersja kolumny 'wykorzystanie_limitu_rocznego_w_%' na liczby
+    df['wykorzystanie_limitu_rocznego_w_%'] = pd.to_numeric(df['wykorzystanie_limitu_rocznego_w_%'], errors='coerce')
+
+    # Ustawienie zaokrąglenia do dwóch miejsc po przecinku w kolumnie procentowej
+    df['wykorzystanie_limitu_rocznego_w_%'] = df['wykorzystanie_limitu_rocznego_w_%'].round(2)
+
     # Konwersja DataFrame na wiersze Excela
     for r_idx, row in enumerate(dataframe_to_rows(df, index=False, header=True), start=1):
         ws.append(row)
@@ -47,6 +54,8 @@ def export_dataframe_to_excel(df):
         for c_idx, cell in enumerate(row, start=1):
             if isinstance(cell, float):  # Jeśli to ułamek czasu (np. timedelta), ustawiamy formatowanie
                 ws.cell(row=r_idx, column=c_idx).number_format = "[h]:mm:ss"
+            elif isinstance(cell, (int, float)):  # Inne wartości numeryczne (w tym procentowe)
+                ws.cell(row=r_idx, column=c_idx).number_format = '0.00'  # Format liczby z dwoma miejscami po przecinku
 
     wb.save(output)
     output.seek(0)  # Reset strumienia na początek
@@ -59,10 +68,17 @@ def export_dataframe_to_excel(df):
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 
+
 def export_dataframe_to_csv(df):
     """
     Eksportuje DataFrame do pliku CSV, który użytkownik może pobrać w aplikacji Streamlit.
     """
+    # Konwersja kolumny 'wykorzystanie_limitu_rocznego_w_%' na liczby
+    df['wykorzystanie_limitu_rocznego_w_%'] = pd.to_numeric(df['wykorzystanie_limitu_rocznego_w_%'], errors='coerce')
+
+    # Ustawienie zaokrąglenia do dwóch miejsc po przecinku w kolumnie procentowej
+    df['wykorzystanie_limitu_rocznego_w_%'] = df['wykorzystanie_limitu_rocznego_w_%'].round(2)
+
     # Konwersja DataFrame do CSV w pamięci
     csv_data = df.to_csv(index=False, sep=";").encode("utf-8")
 
