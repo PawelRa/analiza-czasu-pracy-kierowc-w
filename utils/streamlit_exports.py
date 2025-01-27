@@ -1,16 +1,12 @@
-from pathlib import Path
-from openpyxl import Workbook
-from datetime import timedelta
-from openpyxl.utils.dataframe import dataframe_to_rows
+import io
 import pandas as pd
-from config import DB_OUTPUT_PATH
-
-# Wczytanie konfiguracji
-DB_OUT = DB_OUTPUT_PATH
+from openpyxl import Workbook
+from openpyxl.utils.dataframe import dataframe_to_rows
+import streamlit as st
 
 def timedelta_to_excel_numeric(td):
     """Konwertuje timedelta na liczbę odpowiadającą ułamkowi dnia w Excel."""
-    if isinstance(td, timedelta):  # Sprawdzamy, czy td jest obiektem typu timedelta
+    if isinstance(td, pd.Timedelta):  # Sprawdzamy, czy td jest obiektem typu Timedelta
         return td.total_seconds() / (24 * 3600)  # Liczba dni jako liczba zmiennoprzecinkowa
     elif isinstance(td, (int, float)):  # Jeśli to jest liczba, zwróć ją bez zmian
         return td
@@ -25,10 +21,14 @@ def timedelta_to_time_format(td):
     seconds = int(total_seconds % 60)  # Pozostałe sekundy
     return f"{hours:02}:{minutes:02}:{seconds:02}"
 
-
 def export_dataframe_to_excel(df):
-    output_file_name = "result.xlsx"
-    output_file_path = Path(DB_OUT) / output_file_name
+    """
+    Eksportuje DataFrame do pliku Excel, który użytkownik może pobrać w aplikacji Streamlit.
+    """
+    # Tworzenie pliku Excel w pamięci
+    output = io.BytesIO()
+    wb = Workbook()
+    ws = wb.active
 
     # Konwersja kolumn timedelta na ułamek dnia (dla Excela)
     for column in df.columns:
@@ -39,29 +39,37 @@ def export_dataframe_to_excel(df):
                     lambda x: timedelta_to_excel_numeric(x) if pd.notnull(x) else ""
                 )
 
-    # Tworzenie arkusza Excel z poprawnym formatowaniem
-    wb = Workbook()
-    ws = wb.active
-
-    # Wiersze z DataFrame (nagłówek i dane)
+    # Konwersja DataFrame na wiersze Excela
     for r_idx, row in enumerate(dataframe_to_rows(df, index=False, header=True), start=1):
         ws.append(row)
-        # Ustaw format dla wszystkich wierszy poza nagłówkiem
-        if r_idx == 1:
+        if r_idx == 1:  # Pomijamy nagłówek przy formatowaniu
             continue
         for c_idx, cell in enumerate(row, start=1):
-            if c_idx != 1:  # Ominięcie kolumny ID
-                # Sprawdzamy typ danych dla komórki (tylko timedelta dostaje specjalny format)
-                if isinstance(cell, float):  # Jeśli jest to wartość timedelta w formacie liczbowym
-                    ws.cell(row=r_idx, column=c_idx).number_format = "[h]:mm:ss"
+            if isinstance(cell, float):  # Jeśli to ułamek czasu (np. timedelta), ustawiamy formatowanie
+                ws.cell(row=r_idx, column=c_idx).number_format = "[h]:mm:ss"
 
-    # Zapis pliku Excel
-    wb.save(output_file_path)
-    print(f"Plik został zapisany jako {output_file_path}.")
+    wb.save(output)
+    output.seek(0)  # Reset strumienia na początek
 
-def export_dataframe_to_csv (df):
-    output_file_name = "result.csv"
-    output_file_path = Path(DB_OUT) / output_file_name
-    # Zapisanie wyników do pliku
-    df.to_csv(output_file_path, index=False, sep=";")
-    print(f"Wynik zapisany do pliku: {output_file_path}")
+    # Udostępnienie pliku do pobrania w Streamlit
+    st.download_button(
+        label="Pobierz plik Excel",
+        data=output,
+        file_name="result.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+
+def export_dataframe_to_csv(df):
+    """
+    Eksportuje DataFrame do pliku CSV, który użytkownik może pobrać w aplikacji Streamlit.
+    """
+    # Konwersja DataFrame do CSV w pamięci
+    csv_data = df.to_csv(index=False, sep=";").encode("utf-8")
+
+    # Udostępnienie pliku do pobrania w Streamlit
+    st.download_button(
+        label="Pobierz plik CSV",
+        data=csv_data,
+        file_name="result.csv",
+        mime="text/csv",
+    )
