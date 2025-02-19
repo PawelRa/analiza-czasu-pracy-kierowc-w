@@ -6,13 +6,11 @@ from utils.process_overtime_files import process_overtime_files
 from utils.process_task_files import process_task_files
 from utils.export_result_to_excel import *
 from utils.analysis import analyze_data
+from config import DB_INPUT_PATH, DB_OUTPUT_PATH, CHARTS_PATH, PROCESSED_DATA_PATH, ANNUAL_WORKING_TIME_STANDARD_IN_HOURS, ANNUAL_OVERTIME_LIMIT_FOR_FULLTIME_EMPLOYMENT
 import matplotlib
 matplotlib.use('TkAgg')
 
-
 # Wczytanie konfiguracji
-ENV = dotenv_values(".env")
-DB_INPUT_PATH = Path(ENV["DB_INPUT_PATH"])
 DB_IN_OVERTIME = DB_INPUT_PATH / "overtime"
 DB_IN_TASKS = DB_INPUT_PATH / "tasks"
 
